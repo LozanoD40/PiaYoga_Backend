@@ -1,6 +1,7 @@
 import UsuarioRutina from '../models/usuarioRutina.js'
 import { calcularNivel } from '../utils/calculateLevel.js'
 import { createError } from '../utils/errorHandler.js'
+import Postura from '../models/Postura.js'
 
 export const generarRutinaPersonalizada = async (req, res, next) => {
   try {
@@ -13,7 +14,8 @@ export const generarRutinaPersonalizada = async (req, res, next) => {
 
     const nivel = calcularNivel(peso, edad, estiloVida)
 
-    const posturas = await Rutina.find({ nivel })
+    // ahora sí: buscar posturas por nivel correcto
+    const posturas = await Postura.find({ nivel })
 
     if (posturas.length === 0) {
       return next(createError(404, 'No existen posturas para ese nivel'))

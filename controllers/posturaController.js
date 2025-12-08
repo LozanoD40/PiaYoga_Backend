@@ -1,4 +1,3 @@
-// controllers/posturaController.js
 import Postura from '../models/postura.js'
 import { AppError } from '../utils/errorHandler.js'
 

@@ -1,4 +1,3 @@
-// models/postura.js
 import mongoose from 'mongoose'
 
 const posturaSchema = new mongoose.Schema(
@@ -61,4 +60,5 @@ const posturaSchema = new mongoose.Schema(
   }
 )
 
-export default mongoose.model('Postura', posturaSchema)
+export default mongoose.models.Postura || mongoose.model('Postura', posturaSchema)
+

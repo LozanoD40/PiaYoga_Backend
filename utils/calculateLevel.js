@@ -14,6 +14,16 @@ export function calcularNivel(peso, edad, estilo) {
 
   const niveles = ['principiante', 'medio', 'estandar', 'experto', 'atleta']
 
-  // Limitar entre 0 y 4
-  return niveles[Math.max(0, Math.min(nivelBase - 1, 4))]
+  const nivelCalculado = niveles[Math.max(0, Math.min(nivelBase - 1, 4))]
+
+  // MAPEO hacia el sistema de niveles del modelo Postura
+  const mapaNivelesPostura = {
+    principiante: 'básico',
+    medio: 'básico',
+    estandar: 'intermedio',
+    experto: 'intermedio',
+    atleta: 'avanzado',
+  }
+
+  return mapaNivelesPostura[nivelCalculado]
 }

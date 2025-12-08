@@ -29,7 +29,7 @@ const usuarioRutinaSchema = new mongoose.Schema({
   posturas: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Rutina',
+      ref: 'Postura',
     },
   ],
 
