@@ -47,4 +47,4 @@ const usuarioRutinaSchema = new mongoose.Schema({
   },
 })
 
-export default mongoose.model('UsuarioRutina', usuarioRutinaSchema)
+export default mongoose.models.UsuarioRutina || ongoose.model('UsuarioRutina', usuarioRutinaSchema)

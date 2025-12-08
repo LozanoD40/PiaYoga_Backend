@@ -1,4 +1,3 @@
-// controllers/usuarioRetoController.js
 import UsuarioReto from '../models/usuarioReto.js'
 import Reto from '../models/reto.js'
 

@@ -1,14 +1,25 @@
-// controllers/retoController.js
 import Reto from '../models/reto.js'
+import Rutina from '../models/rutina.js';
 
 export const crearReto = async (req, res) => {
   try {
-    const reto = await Reto.create(req.body)
-    res.status(201).json(reto)
+    const reto = await Reto.create(req.body);
+
+    // Crear Rutina tipo reto
+    await Rutina.create({
+      tipo: "reto",
+      titulo: reto.titulo,
+      descripcion: reto.descripcion,
+      posturas: reto.posturas,
+      recompensaExtra: reto.recompensaEspecial,
+      dificultad: reto.dificultad
+    });
+
+    res.status(201).json({ reto, mensaje: "Reto creado y convertido a Rutina" });
   } catch (error) {
-    res.status(500).json({ message: 'Error al crear reto', error })
+    res.status(500).json({ message: 'Error al crear reto', error });
   }
-}
+};
 
 export const obtenerRetos = async (req, res) => {
   try {

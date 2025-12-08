@@ -1,4 +1,3 @@
-// models/usuarioReto.js
 import mongoose from 'mongoose'
 
 const usuarioRetoSchema = new mongoose.Schema(

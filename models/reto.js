@@ -1,4 +1,3 @@
-// models/reto.js
 import mongoose from 'mongoose'
 
 const retoSchema = new mongoose.Schema(
