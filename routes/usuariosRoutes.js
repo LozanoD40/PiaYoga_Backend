@@ -58,7 +58,7 @@ router.post('/rutinas-personalizadas', verificarToken, generarRutinaPersonalizad
 
 //Horario
 router.post('/horario', verificarToken, guardarHorario)
-router.get('/horario', verificarToken, obtenerHorario)
+router.get('/horario', obtenerHorario)
 router.patch('/horario/estado', verificarToken, cambiarEstadoHorario)
 
 // Inventario del usuario

@@ -11,10 +11,10 @@ import { verificarToken, soloAdmin } from '../middleware/auth.js'
 const router = express.Router()
 
 // PUBLICO / PRIVADO
-router.get('/', verificarToken, listarHorarios)
+router.get('/', listarHorarios)
 
 // ADMIN
-router.post('/', verificarToken, soloAdmin, crearHorario)
+router.post('/', crearHorario)
 router.put('/:id', verificarToken, soloAdmin, editarHorario)
 router.delete('/:id', verificarToken, soloAdmin, eliminarHorario)
 

@@ -13,8 +13,8 @@ const router = express.Router()
 
 // Consejos
 router.post('/', crearConsejo)
-router.get('/', verificarToken, listarConsejos)
-router.get('/:id', verificarToken, obtenerConsejo)
+router.get('/', listarConsejos)
+router.get('/:id', obtenerConsejo)
 router.put('/:id', verificarToken, soloAdmin, actualizarConsejo)
 router.delete('/:id', verificarToken, soloAdmin, eliminarConsejo)
 router.patch(

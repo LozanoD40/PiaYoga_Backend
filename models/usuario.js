@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import bcrypt from 'bcrypt'
 
 const usuarioSchema = new mongoose.Schema(
   {
@@ -34,5 +35,13 @@ const usuarioSchema = new mongoose.Schema(
   },
   { timestamps: true }
 )
+
+usuarioSchema.pre('save', async function () {
+  if (!this.isModified('password')) {
+    return
+  } 
+  const salt = await bcrypt.genSalt(10) 
+  this.password = await bcrypt.hash(this.password, salt) 
+})
 
 export default mongoose.model('Usuario', usuarioSchema)
