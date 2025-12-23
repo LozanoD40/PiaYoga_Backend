@@ -1,107 +1,112 @@
 import UsuarioReto from '../models/usuarioReto.js'
 import Reto from '../models/reto.js'
+import Postura from '../models/postura.js'
 
-export const iniciarReto = async (req, res) => {
+/* 🟦 Crear registro de un usuario en un reto */
+export const asignarRetoAUsuario = async (req, res) => {
   try {
-    const usuarioId = req.usuario.id
+    const usuarioId = req.usuario._id
     const { retoId } = req.body
 
-    // Verificar que el reto existe
+    // Verifica que el reto exista
     const reto = await Reto.findById(retoId)
-    if (!reto) return res.status(404).json({ message: 'Reto no encontrado' })
+    if (!reto) return res.status(404).json({ msg: 'Reto no encontrado' })
 
-    // Verificar si el usuario ya tiene un progreso previo
-    let progreso = await UsuarioReto.findOne({
+    // Evitar duplicados (si aplicas unique)
+    const existe = await UsuarioReto.findOne({
       usuario: usuarioId,
       reto: retoId,
     })
+    if (existe)
+      return res.status(400).json({ msg: 'Ya estás inscrito a este reto' })
 
-    if (!progreso) {
-      progreso = await UsuarioReto.create({
-        usuario: usuarioId,
-        reto: retoId,
-        fechaInicio: new Date(),
-        estado: 'en_progreso',
-      })
-    }
-
-    res.status(201).json(progreso)
-  } catch (error) {
-    res.status(500).json({ message: 'Error al iniciar reto', error })
-  }
-}
-
-export const completarPostura = async (req, res) => {
-  try {
-    const usuarioId = req.usuario.id
-    const { retoId, posturaId } = req.body
-
-    const progreso = await UsuarioReto.findOne({
+    const nuevo = await UsuarioReto.create({
       usuario: usuarioId,
       reto: retoId,
+      estado: 'en_progreso',
+      fechaInicio: new Date(),
     })
 
-    if (!progreso)
-      return res.status(404).json({ message: 'No has iniciado este reto' })
-
-    if (progreso.posturasCompletadas.includes(posturaId)) {
-      return res.status(400).json({ message: 'Ya completaste esta postura' })
-    }
-
-    progreso.posturasCompletadas.push(posturaId)
-    await progreso.save()
-
-    res.status(200).json(progreso)
+    res.json(nuevo)
   } catch (error) {
-    res.status(500).json({ message: 'Error al registrar postura', error })
+    res.status(500).json({ msg: 'Error al asignar reto', error })
   }
 }
 
-export const completarReto = async (req, res) => {
-  try {
-    const usuarioId = req.usuario.id
-    const { retoId } = req.body
-
-    const progreso = await UsuarioReto.findOne({
-      usuario: usuarioId,
-      reto: retoId,
-    }).populate('reto')
-
-    if (!progreso)
-      return res
-        .status(404)
-        .json({ message: 'No estás participando en este reto' })
-
-    progreso.estado = 'completado'
-    progreso.fechaFin = new Date()
-
-    // Tiempo total
-    if (progreso.fechaInicio) {
-      const diffMs = progreso.fechaFin - progreso.fechaInicio
-      progreso.tiempoTotalMin = Math.round(diffMs / 60000)
-    }
-
-    await progreso.save()
-
-    res.status(200).json({
-      message: 'Reto completado. Puedes reclamar tu recompensa.',
-      progreso,
-    })
-  } catch (error) {
-    res.status(500).json({ message: 'Error al completar reto', error })
-  }
-}
-
+/* 🟦 Obtener mis retos */
 export const obtenerMisRetos = async (req, res) => {
   try {
-    const usuarioId = req.usuario.id
+    const usuarioId = req.usuario._id
 
     const retos = await UsuarioReto.find({ usuario: usuarioId })
       .populate('reto')
       .populate('posturasCompletadas')
 
-    res.status(200).json(retos)
+    res.json(retos)
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener retos', error })
+    res.status(500).json({ msg: 'Error al obtener retos', error })
+  }
+}
+
+/* 🟦 Marcar postura como completada */
+export const completarPostura = async (req, res) => {
+  try {
+    const usuarioId = req.usuario._id
+    const { usuarioRetoId, posturaId } = req.body
+
+    const registro = await UsuarioReto.findOne({
+      _id: usuarioRetoId,
+      usuario: usuarioId,
+    })
+
+    if (!registro)
+      return res.status(404).json({ msg: 'Registro no encontrado' })
+
+    if (registro.posturasCompletadas.includes(posturaId))
+      return res.status(400).json({ msg: 'Postura ya completada' })
+
+    registro.posturasCompletadas.push(posturaId)
+    await registro.save()
+
+    res.json(registro)
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al completar postura', error })
+  }
+}
+
+/* 🟦 Finalizar reto */
+export const finalizarReto = async (req, res) => {
+  try {
+    const usuarioId = req.usuario._id
+    const { usuarioRetoId } = req.body
+
+    const registro = await UsuarioReto.findOne({
+      _id: usuarioRetoId,
+      usuario: usuarioId,
+    }).populate('reto')
+
+    if (!registro)
+      return res.status(404).json({ msg: 'Registro no encontrado' })
+
+    registro.estado = 'completado'
+    registro.fechaFin = new Date()
+    registro.tiempoTotalMin =
+      (registro.fechaFin - registro.fechaInicio) / 1000 / 60
+
+    await registro.save()
+
+    res.json({ msg: 'Reto completado', registro })
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al completar reto', error })
+  }
+}
+
+/* 🟦 Eliminar participación en un reto */
+export const eliminarUsuarioReto = async (req, res) => {
+  try {
+    await UsuarioReto.findByIdAndDelete(req.params.id)
+    res.json({ msg: 'Registro eliminado' })
+  } catch (error) {
+    res.status(500).json({ msg: 'Error al eliminar', error })
   }
 }

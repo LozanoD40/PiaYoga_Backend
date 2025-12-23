@@ -11,23 +11,10 @@ import {
 } from '../controllers/usuarioController.js'
 
 import {
-  generarRutinaPersonalizada,
-  asignarRutinaExistente,
-  completarUsuarioRutina,
-} from '../controllers/usuarioRutinaController.js'
-
-import {
   guardarHorario,
   obtenerHorario,
   cambiarEstadoHorario,
 } from '../controllers/usuarioHorarioController.js'
-
-import {
-  iniciarReto,
-  completarPostura,
-  completarReto,
-  obtenerMisRetos,
-} from '../controllers/usuarioRetoController.js'
 
 import {
   obtenerMiInventario,
@@ -43,6 +30,22 @@ import {
   resetSlot,
   resetTodo,
 } from '../controllers/usuarioPersonajeController.js'
+
+import {
+  asignarRutina,
+  obtenerMisRutinas,
+  marcarProgreso,
+  completarRutina,
+  eliminarRutina
+} from '../controllers/usuarioRutinaController.js'
+
+import {
+  asignarRetoAUsuario,
+  obtenerMisRetos,
+  completarPostura,
+  finalizarReto,
+  eliminarUsuarioReto,
+} from '../controllers/usuarioRetoController.js'
 
 import { verificarToken, soloAdmin } from '../middleware/auth.js'
 
@@ -62,11 +65,6 @@ router.put('/rol/:id', verificarToken, soloAdmin, cambiarRol)
 router.put('/estado/:id', verificarToken, soloAdmin, cambiarEstado)
 router.delete('/:id', verificarToken, soloAdmin, eliminarUsuario)
 
-// Rutinas personalizadas
-router.post('/personalizada', generarRutinaPersonalizada)
-router.post('/asignar', asignarRutinaExistente)
-router.post('/completar', completarUsuarioRutina)
-
 //Horario
 router.post('/horario', verificarToken, guardarHorario)
 router.get('/horario', obtenerHorario)
@@ -78,12 +76,6 @@ router.post('/inventario', verificarToken, crearInventario)
 router.post('/inventario/agregar', verificarToken, agregarAccesorio)
 router.post('/inventario/remover', verificarToken, removerAccesorio)
 
-// RETOS DEL USUARIO
-router.post('/retos/iniciar', verificarToken, iniciarReto)
-router.post('/retos/completar-postura', verificarToken, completarPostura)
-router.post('/retos/completar', verificarToken, completarReto)
-router.get('/retos', verificarToken, obtenerMisRetos)
-
   // Personaje
 router.get('/personaje', obtenerMiPersonaje)
 router.post('/personaje', crearPersonajeInicial)
@@ -91,4 +83,17 @@ router.patch('/personaje/equipar', equiparAccesorio)
 router.patch('/personaje/reset-slot', resetSlot)
 router.patch('/personaje/reset-todo', resetTodo)
 
+// Rutinas del usuario
+router.post('/rutina', verificarToken, asignarRutina)
+router.get('/rutina', verificarToken, obtenerMisRutinas)
+router.post('/progreso', verificarToken, marcarProgreso)
+router.post('/completar', verificarToken, completarRutina)
+router.delete('/:rutinaId', verificarToken, eliminarRutina)
+
+// Retos del usuario
+router.post('/reto', verificarToken, asignarRetoAUsuario)
+router.get('/reto', verificarToken, obtenerMisRetos)
+router.post('/reto/completar-postura', verificarToken, completarPostura)
+router.post('/reto/finalizar', verificarToken, finalizarReto)
+router.delete('/reto/:id', verificarToken, eliminarUsuarioReto)
 export default router

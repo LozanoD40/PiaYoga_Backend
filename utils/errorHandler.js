@@ -1,6 +1,4 @@
-// --------------------------------------------------------
-// 1. Clase de error personalizada (para errores controlados)
-// --------------------------------------------------------
+// 1. Clase de error personalizada 
 export class AppError extends Error {
   constructor(message, statusCode) {
     super(message)
@@ -10,9 +8,7 @@ export class AppError extends Error {
   }
 }
 
-// --------------------------------------------------------
 // 2. Handlers para errores específicos de MongoDB / JWT
-// --------------------------------------------------------
 const handleCastErrorDB = (err) => {
   const message = `ID inválido: ${err.value}`
   return new AppError(message, 400)
@@ -38,9 +34,7 @@ const handleJWTError = () =>
 const handleJWTExpiredError = () =>
   new AppError('Token expirado. Vuelve a iniciar sesión.', 401)
 
-// --------------------------------------------------------
 // 3. Middleware final de manejo de errores
-// --------------------------------------------------------
 export const handleError = (err, req, res, next) => {
   console.error('ERROR CAPTURADO:', err)
 
@@ -67,9 +61,7 @@ export const handleError = (err, req, res, next) => {
   })
 }
 
-// --------------------------------------------------------
 // 4. Función auxiliar createError
-// --------------------------------------------------------
 export const createError = (statusCode, message) => {
   return new AppError(message, statusCode)
 }

@@ -46,8 +46,5 @@ const usuarioPersonajeSchema = new mongoose.Schema({
   },
 })
 
-const UsuarioPersonaje = mongoose.model(
-  'UsuarioPersonaje',
-  usuarioPersonajeSchema
-)
-export default UsuarioPersonaje
+export default mongoose.model('UsuarioPersonaje',usuarioPersonajeSchema)
+

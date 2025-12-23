@@ -2,47 +2,34 @@ import mongoose from 'mongoose'
 
 const retoSchema = new mongoose.Schema(
   {
-    titulo: { type: String, required: true },
-    descripcion: { type: String, default: '' },
-    imagen: { type: String },
+    nombre: { type: String, required: true },
+    descripcion: String,
 
-    dificultad: {
-      type: Number,
-      min: 1,
-      max: 5,
-      default: 1,
+    rutina: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Rutina',
+      required: true,
     },
 
-    // Lista de posturas que forman el reto
-    posturas: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Postura',
-        required: true,
-      },
-    ],
-
-    // Indica si deben hacerse en el orden definido
-    enOrden: { type: Boolean, default: false },
-
-    // Recompensas especiales por completar el reto
-    recompensaEspecial: {
-      dineroExtra: { type: Number, default: 0 },
-      puntosExtra: { type: Number, default: 0 },
-      accesorioEspecial: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Accesorio',
-        default: null,
-      },
+    recompensaOro: { type: Number, default: 0 },
+    recompensaAccesorio: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Accesorio',
+      default: null,
     },
 
-    // Opcional: retos por tiempo
-    tiempoLimiteMin: { type: Number, default: null },
+    fechaInicio: Date,
+    fechaFin: Date,
 
-    fechaInicio: { type: Date, default: null },
-    fechaFin: { type: Date, default: null },
+    estado: {
+      type: String,
+      enum: ['activo', 'oculto', 'finalizado'],
+      default: 'activo',
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 )
 
 export default mongoose.model('Reto', retoSchema)

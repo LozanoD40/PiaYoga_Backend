@@ -9,9 +9,9 @@ const usuarioInventarioSchema = new mongoose.Schema({
   },
   items: [
     {
-      item: {
+      accesorio: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'ItemBase',
+        ref: 'accesorio',
         required: true,
       },
       desbloqueadoEn: {

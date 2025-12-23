@@ -11,7 +11,6 @@ import accesoriosRoutes from './routes/accesoriosRoutes.js'
 import consejosRoutes from './routes/consejosRoutes.js'
 import horariosRoutes from './routes/horariosRoutes.js'
 import posturaRoutes from './routes/posturasRoutes.js'
-import retosRoutes from './routes/retosRoutes.js'
 import pushRoutes from './routes/pushRoutes.js'
 import rutinasRoutes from './routes/rutinasRoutes.js'
 import usuariosRoutes from './routes/usuariosRoutes.js'
@@ -21,7 +20,11 @@ const port = process.env.PORT || 3000
 
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: [
+      'http://localhost:5173',
+      'https://lozanod40.github.io',
+      'https://lozanod40.github.io/PiaYoga_Frontend',
+    ],
     credentials: true,
   })
 )
@@ -36,7 +39,6 @@ app.use('/api/accesorios', accesoriosRoutes)
 app.use('/api/consejos', consejosRoutes)
 app.use('/api/horarios', horariosRoutes)
 app.use('/api/posturas', posturaRoutes)
-app.use('/retos', retosRoutes)
 app.use('/api/push', pushRoutes)
 app.use('/api/rutinas', rutinasRoutes)
 app.use('/api/usuarios', usuariosRoutes)

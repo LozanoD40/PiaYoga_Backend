@@ -1,50 +1,36 @@
-import mongoose from 'mongoose'
-
-const usuarioRutinaSchema = new mongoose.Schema({
-  usuario: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario',
-    required: true,
-  },
-
-  tipo: {
-    type: String,
-    enum: ['predefinida', 'personalizada'],
-    required: true,
-  },
-
-  datosPersonales: {
-    peso: Number,
-    edad: Number,
-    estiloVida: {
-      type: String,
-      enum: ['sedentario', 'activo', 'deportista', 'atleta'],
-    },
-    nivel: {
-      type: String,
-      enum: ['principiante', 'medio', 'estandar', 'experto', 'atleta'],
-    },
-  },
-
-  posturas: [
-    {
+const usuarioRutinaSchema = new mongoose.Schema(
+  {
+    usuario: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Postura',
+      ref: 'Usuario',
+      required: true,
     },
-  ],
 
-  progresion: [
-    {
-      semana: Number,
-      duracionMinutos: Number,
-      intensidad: String,
+    rutina: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Rutina',
+      required: true,
     },
-  ],
 
-  fechaCreacion: {
-    type: Date,
-    default: Date.now,
+    progreso: [
+      {
+        fecha: Date,
+        completado: Boolean,
+        duracionMinutos: Number,
+      },
+    ],
+
+    puntosGanados: { type: Number, default: 0 },
+    dineroGanado: { type: Number, default: 0 },
+
+    completado: { type: Boolean, default: false },
+
+    fechaInicio: { type: Date, default: Date.now },
+    fechaFinalizacion: Date,
   },
-})
+  {
+    timestamps: true,
+  }
+)
 
-export default mongoose.models.UsuarioRutina || ongoose.model('UsuarioRutina', usuarioRutinaSchema)
+export default mongoose.model('UsuarioRutina', usuarioRutinaSchema)

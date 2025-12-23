@@ -1,120 +1,175 @@
 import Rutina from '../models/rutina.js'
-import { generarRecompensa } from './recompensaController.js'
-import UsuarioInventario from '../models/usuarioInventario.js'
-import Recompensa from '../models/recompensas.js'
-import Usuario from '../models/usuario.js'
-import Accesorio from '../models/accesorio.js'
+import Postura from '../models/postura.js'
 
-
-// Crear rutina
 export const crearRutina = async (req, res) => {
   try {
-    const rutina = await Rutina.create(req.body)
+    const { nombre, tipo, descripcion, posturas } = req.body
+
+    if (!nombre || !tipo || !posturas || posturas.length === 0) {
+      return res.status(400).json({ error: 'Faltan datos obligatorios' })
+    }
+
+    // Validación tipo
+    if (!['predefinido', 'personalizado'].includes(tipo)) {
+      return res.status(400).json({ error: 'Tipo inválido' })
+    }
+
+    // Si es predefinido, solo admin
+    if (tipo === 'predefinido' && req.user.rol !== 'admin') {
+      return res
+        .status(403)
+        .json({
+          error: 'Solo administradores pueden crear rutinas predefinidas',
+        })
+    }
+
+    // ============================
+    // Obtener posturas desde DB
+    // ============================
+    const posturasDB = await Postura.find({ _id: { $in: posturas } })
+
+    if (posturasDB.length !== posturas.length) {
+      return res.status(404).json({ error: 'Una o más posturas no existen' })
+    }
+
+    // ============================
+    // Calcular energía, tiempo, dificultad
+    // ============================
+    const energiaTotal = posturasDB.reduce((acc, p) => acc + p.energia, 0)
+    const tiempoTotal = posturasDB.reduce((acc, p) => acc + p.tiempo, 0)
+    const dificultadPromedio =
+      posturasDB.reduce((acc, p) => acc + p.dificultad, 0) / posturasDB.length
+
+    // ============================
+    // Crear Rutina
+    // ============================
+    const nuevaRutina = await Rutina.create({
+      nombre,
+      tipo,
+      descripcion,
+      posturas,
+      energiaTotal,
+      tiempoTotal,
+      dificultadPromedio,
+      estado: 'publicado',
+    })
 
     res.status(201).json({
-      message: 'Rutina creada',
-      rutina,
+      msg: 'Rutina creada correctamente',
+      rutina: nuevaRutina,
     })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Error al crear rutina' })
+  } catch (err) {
+    console.error('Error creando rutina:', err)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
 }
 
-// Obtener todas las rutinas
+/* ===============================
+   Obtener todas las rutinas
+=================================*/
 export const obtenerRutinas = async (req, res) => {
   try {
     const rutinas = await Rutina.find().populate('posturas')
 
     res.json(rutinas)
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener rutinas' })
+  } catch (err) {
+    console.error('Error obteniendo rutinas:', err)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
 }
 
-// Obtener una rutina
-export const obtenerRutina = async (req, res) => {
+/* ===============================
+   Obtener rutina por ID
+=================================*/
+export const obtenerRutinaPorId = async (req, res) => {
   try {
-    const rutina = await Rutina.findById(req.params.id).populate('posturas')
+    const { id } = req.params
 
-    if (!rutina)
-      return res.status(404).json({ message: 'Rutina no encontrada' })
+    const rutina = await Rutina.findById(id).populate('posturas')
 
-    res.json(rutina)
-  } catch (error) {
-    res.status(500).json({ message: 'Error al obtener la rutina' })
-  }
-}
-
-// Eliminar rutina
-export const eliminarRutina = async (req, res) => {
-  try {
-    await Rutina.findByIdAndDelete(req.params.id)
-
-    res.json({ message: 'Rutina eliminada' })
-  } catch (error) {
-    res.status(500).json({ message: 'Error al eliminar rutina' })
-  }
-}
-
-
-export const completarRutina = async (req, res) => {
-  try {
-    const { usuarioId, rutinaId } = req.body
-
-    const rutina = await Rutina.findById(rutinaId).populate('posturas')
-    if (!rutina)
-      return res.status(404).json({ message: 'Rutina no encontrada' })
-
-    const usuario = await Usuario.findById(usuarioId)
-    if (!usuario)
-      return res.status(404).json({ message: 'Usuario no encontrado' })
-
-    let recompensasGeneradas = []
-    let totalPuntos = 0
-    let totalDinero = 0
-
-    // 1. Generar recompensa por cada postura
-    for (const postura of rutina.posturas) {
-      req.body = { usuarioId, posturaId: postura._id }
-      const r = await generarRecompensa(req, {
-        status: () => ({ json: () => {} }), // respuesta vacía
-      })
-
-      recompensasGeneradas.push(r.recompensa)
-      totalPuntos += r.recompensa.puntos
-      totalDinero += r.recompensa.dinero
+    if (!rutina) {
+      return res.status(404).json({ error: 'Rutina no encontrada' })
     }
 
-    // 2. Si es una rutina de reto, añadir recompensa extra
-    let accesorioExtra = null
-    if (rutina.tipo === 'reto') {
-      usuario.puntos += rutina.recompensaExtra.puntos || 0
-      usuario.dinero += rutina.recompensaExtra.dinero || 0
+    res.json(rutina)
+  } catch (err) {
+    console.error('Error obteniendo rutina:', err)
+    res.status(500).json({ error: 'Error interno del servidor' })
+  }
+}
 
-      if (rutina.recompensaExtra.accesorio) {
-        // dar accesorio especial
-        await UsuarioInventario.create({
-          usuario: usuarioId,
-          accesorio: rutina.recompensaExtra.accesorio,
-        })
+/* ===============================
+   Actualizar rutina (solo admin)
+=================================*/
+export const actualizarRutina = async (req, res) => {
+  try {
+    const { id } = req.params
 
-        accesorioExtra = rutina.recompensaExtra.accesorio
+    if (req.user.rol !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Solo administradores pueden editar rutinas' })
+    }
+
+    const { nombre, descripcion, posturas, estado } = req.body
+
+    // Si hay posturas nuevas, recalcular
+    let recalculo = {}
+    if (posturas) {
+      const posturasDB = await Postura.find({ _id: { $in: posturas } })
+
+      if (posturasDB.length !== posturas.length) {
+        return res.status(404).json({ error: 'Una o más posturas no existen' })
       }
 
-      await usuario.save()
+      recalculo.energiaTotal = posturasDB.reduce((acc, p) => acc + p.energia, 0)
+      recalculo.tiempoTotal = posturasDB.reduce((acc, p) => acc + p.tiempo, 0)
+      recalculo.dificultadPromedio =
+        posturasDB.reduce((acc, p) => acc + p.dificultad, 0) / posturasDB.length
+    }
+
+    const rutinaActualizada = await Rutina.findByIdAndUpdate(
+      id,
+      { nombre, descripcion, posturas, estado, ...recalculo },
+      { new: true }
+    )
+
+    if (!rutinaActualizada) {
+      return res.status(404).json({ error: 'Rutina no encontrada' })
     }
 
     res.json({
-      message: 'Rutina completada',
-      recompensasGeneradas,
-      totalPuntos,
-      totalDinero,
-      retoExtra: rutina.tipo === 'reto' ? rutina.recompensaExtra : null,
-      accesorioExtra,
+      msg: 'Rutina actualizada correctamente',
+      rutina: rutinaActualizada,
     })
-  } catch (error) {
-    console.error(error)
-    res.status(500).json({ message: 'Error al completar la rutina' })
+  } catch (err) {
+    console.error('Error actualizando rutina:', err)
+    res.status(500).json({ error: 'Error interno del servidor' })
+  }
+}
+
+/* ===============================
+   Eliminar rutina (solo admin)
+=================================*/
+export const eliminarRutina = async (req, res) => {
+  try {
+    const { id } = req.params
+
+    if (req.user.rol !== 'admin') {
+      return res
+        .status(403)
+        .json({ error: 'Solo administradores pueden eliminar rutinas' })
+    }
+
+    const rutina = await Rutina.findByIdAndDelete(id)
+
+    if (!rutina) {
+      return res.status(404).json({ error: 'Rutina no encontrada' })
+    }
+
+    res.json({ msg: 'Rutina eliminada correctamente' })
+  } catch (err) {
+    console.error('Error eliminando rutina:', err)
+    res.status(500).json({ error: 'Error interno del servidor' })
   }
 }

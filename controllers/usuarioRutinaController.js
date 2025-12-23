@@ -1,128 +1,142 @@
-import UsuarioRutina from '../models/usuarioRutina.js'
-import Postura from '../models/postura.js'
 import Rutina from '../models/rutina.js'
+import Postura from '../models/postura.js'
 import Usuario from '../models/usuario.js'
-import { calcularNivel } from '../utils/calculateLevel.js'
-import { createError } from '../utils/errorHandler.js'
-import { generarRecompensa } from '../controllers/recompensaController.js'
+import Accesorio from '../models/accesorio.js'
 
-export const generarRutinaPersonalizada = async (req, res, next) => {
+// ---------------------------------------------
+// 1) ASIGNAR RUTINA A UN USUARIO
+// ---------------------------------------------
+export const asignarRutina = async (req, res) => {
   try {
-    const { peso, edad, estiloVida } = req.body
-    const usuarioId = req.usuario.id
-
-    if (!peso || !edad || !estiloVida)
-      return next(createError(400, 'Faltan datos obligatorios'))
-
-    const nivel = calcularNivel(peso, edad, estiloVida)
-
-    const posturas = await Postura.find({ nivel })
-
-    if (posturas.length === 0)
-      return next(createError(404, 'No existen posturas para ese nivel'))
-
-    const progresion = [
-      { semana: 1, duracionMinutos: 10, intensidad: 'baja' },
-      { semana: 2, duracionMinutos: 15, intensidad: 'media' },
-      { semana: 3, duracionMinutos: 20, intensidad: 'media' },
-      { semana: 4, duracionMinutos: 25, intensidad: 'alta' },
-    ]
-
-    const nuevaRutina = await UsuarioRutina.create({
-      usuario: usuarioId,
-      tipo: 'personalizado',
-      datosPersonales: { peso, edad, estiloVida, nivel },
-      posturas: posturas.map((p) => p._id),
-      progresion,
-    })
-
-    res.status(201).json({
-      mensaje: 'Rutina personalizada creada',
-      rutina: nuevaRutina,
-    })
-  } catch (error) {
-    next(error)
-  }
-}
-
-export const asignarRutinaExistente = async (req, res, next) => {
-  try {
+    const usuarioId = req.user.id
     const { rutinaId } = req.body
-    const usuarioId = req.usuario.id
 
-    const rutina = await Rutina.findById(rutinaId).populate('posturas')
-    if (!rutina) return next(createError(404, 'Rutina no encontrada'))
+    const rutina = await Rutina.findById(rutinaId)
+    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
 
-    const nueva = await UsuarioRutina.create({
-      usuario: usuarioId,
-      tipo: rutina.tipo,
-      rutina: rutinaId,
-      posturas: rutina.posturas.map((p) => p._id),
-      progresion: [],
-    })
+    // Asignar usuario si era predefinida o reto
+    rutina.usuario = usuarioId
+    await rutina.save()
 
-    res.json({
-      mensaje: 'Rutina asignada al usuario',
-      rutina: nueva,
-    })
+    return res.json({ mensaje: 'Rutina asignada correctamente', rutina })
   } catch (error) {
-    next(error)
+    console.log(error)
+    return res.status(500).json({ error: 'Error asignando rutina' })
   }
 }
 
-export const completarUsuarioRutina = async (req, res, next) => {
+// ---------------------------------------------
+// 2) OBTENER TODAS LAS RUTINAS DEL USUARIO
+// ---------------------------------------------
+export const obtenerMisRutinas = async (req, res) => {
   try {
-    const { usuarioRutinaId } = req.body
-    const usuarioId = req.usuario.id
+    const usuarioId = req.user.id
 
-    const ur = await UsuarioRutina.findById(usuarioRutinaId)
-      .populate('posturas')
-      .populate('rutina')
-    if (!ur) return next(createError(404, 'Rutina de usuario no encontrada'))
+    const rutinas = await Rutina.find({ usuario: usuarioId }).populate(
+      'posturas'
+    )
 
-    let totalPuntos = 0
-    let totalDinero = 0
-    let recompensas = []
+    return res.json(rutinas)
+  } catch (error) {
+    return res.status(500).json({ error: 'Error obteniendo rutinas' })
+  }
+}
 
-    // Recompensa por cada postura
-    for (const postura of ur.posturas) {
-      const response = await generarRecompensa(
-        { body: { usuarioId, posturaId: postura._id } },
-        { status: () => ({ json: () => {} }) }
-      )
+// ---------------------------------------------
+// 3) MARCAR PROGRESO DE UNA RUTINA
+// ---------------------------------------------
+export const marcarProgreso = async (req, res) => {
+  try {
+    const usuarioId = req.user.id
+    const { rutinaId, semana, duracionMinutos, intensidad } = req.body
 
-      recompensas.push(response.recompensa)
-      totalPuntos += response.recompensa.puntos
-      totalDinero += response.recompensa.dinero
+    const rutina = await Rutina.findOne({ _id: rutinaId, usuario: usuarioId })
+    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+
+    const registro = {
+      semana,
+      duracionMinutos,
+      intensidad,
+      completado: false,
     }
 
-    // Bono extra si es RETO
-    let recompensaExtra = null
-    if (ur.tipo === 'reto' && ur.rutina?.recompensaExtra) {
-      const usuario = await Usuario.findById(usuarioId)
+    rutina.progresion.push(registro)
+    await rutina.save()
 
-      usuario.puntos += ur.rutina.recompensaExtra.puntos
-      usuario.dinero += ur.rutina.recompensaExtra.dinero
+    return res.json({ mensaje: 'Progreso registrado', rutina })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({ error: 'Error guardando progreso' })
+  }
+}
 
-      await usuario.save()
+// ---------------------------------------------
+// 4) COMPLETAR RUTINA (otorga recompensas)
+// ---------------------------------------------
+export const completarRutina = async (req, res) => {
+  try {
+    const usuarioId = req.user.id
+    const { rutinaId } = req.body
 
-      recompensaExtra = ur.rutina.recompensaExtra
+    const rutina = await Rutina.findOne({
+      _id: rutinaId,
+      usuario: usuarioId,
+    }).populate('posturas')
+    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+
+    if (rutina.completado) {
+      return res.status(400).json({ error: 'Rutina ya completada' })
     }
 
-    ur.completado = true
-    ur.fechaCompletado = new Date()
-    ur.totalPuntosGanados = totalPuntos
-    ur.totalDineroGanado = totalDinero
-    await ur.save()
+    // 1) Calcular recompensas
+    let puntos = 0
+    let dinero = 0
 
-    res.json({
+    rutina.posturas.forEach((p) => {
+      puntos += p.puntos || 0
+      dinero += p.dinero || 0
+    })
+
+    // BONUS SI ES RETO
+    if (rutina.tipo === 'reto') {
+      puntos *= 2
+      dinero *= 2
+    }
+
+    rutina.totalPuntosGanados = puntos
+    rutina.totalDineroGanado = dinero
+
+    rutina.completado = true
+    rutina.fechaCompletado = new Date()
+    await rutina.save()
+
+    return res.json({
       mensaje: 'Rutina completada',
-      totalPuntos,
-      totalDinero,
-      recompensaExtra,
-      recompensas,
+      puntosGanados: puntos,
+      dineroGanado: dinero,
+      rutina,
     })
   } catch (error) {
-    next(error)
+    return res.status(500).json({ error: 'Error completando rutina' })
+  }
+}
+
+// ---------------------------------------------
+// 5) ELIMINAR UNA RUTINA DEL USUARIO
+// ---------------------------------------------
+export const eliminarRutina = async (req, res) => {
+  try {
+    const usuarioId = req.user.id
+    const { rutinaId } = req.params
+
+    const rutina = await Rutina.findOneAndDelete({
+      _id: rutinaId,
+      usuario: usuarioId,
+    })
+    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+
+    return res.json({ mensaje: 'Rutina eliminada correctamente' })
+  } catch (error) {
+    return res.status(500).json({ error: 'Error eliminando rutina' })
   }
 }

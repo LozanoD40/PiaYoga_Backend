@@ -1,72 +1,45 @@
 import mongoose from 'mongoose'
 
-const usuarioRutinaSchema = new mongoose.Schema({
-  usuario: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario',
-    required: true,
-  },
-
-  // ahora coincide con los tipos reales de Rutina
-  tipo: {
-    type: String,
-    enum: ['predefinido', 'personalizado', 'reto'],
-    required: true,
-  },
-
-  // si es una rutina existente
-  rutina: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Rutina',
-    default: null,
-  },
-
-  // solo se usa en rutina personalizada
-  datosPersonales: {
-    peso: Number,
-    edad: Number,
-    estiloVida: {
+const rutinaSchema = new mongoose.Schema(
+  {
+    nombre: {
       type: String,
-      enum: ['sedentario', 'activo', 'deportista', 'atleta'],
+      required: true,
+      trim: true,
     },
-    nivel: {
+
+    tipo: {
       type: String,
-      enum: ['principiante', 'medio', 'estandar', 'experto', 'atleta'],
+      enum: ['predefinido', 'personalizado'],
+      required: true,
+    },
+
+    descripcion: {
+      type: String,
+      default: '',
+    },
+
+    posturas: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Postura',
+        required: true,
+      },
+    ],
+
+    energiaTotal: { type: Number, default: 0 },
+    tiempoTotal: { type: Number, default: 0 },
+    dificultadPromedio: { type: Number, default: 1 },
+
+    estado: {
+      type: String,
+      enum: ['publicado', 'oculto'],
+      default: 'publicado',
     },
   },
+  {
+    timestamps: true,
+  }
+)
 
-  // lista final de posturas a realizar (derivadas de rutina o generadas)
-  posturas: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Postura',
-    },
-  ],
-
-  // progreso del usuario en la rutina
-  progresion: [
-    {
-      semana: Number,
-      duracionMinutos: Number,
-      intensidad: String,
-      completado: { type: Boolean, default: false },
-    },
-  ],
-
-  completado: {
-    type: Boolean,
-    default: false,
-  },
-
-  totalPuntosGanados: { type: Number, default: 0 },
-  totalDineroGanado: { type: Number, default: 0 },
-
-  fechaCreacion: {
-    type: Date,
-    default: Date.now,
-  },
-
-  fechaCompletado: { type: Date, default: null },
-})
-
-export default mongoose.model('UsuarioRutina', usuarioRutinaSchema)
+export default mongoose.model('Rutina', rutinaSchema)

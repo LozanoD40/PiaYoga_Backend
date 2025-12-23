@@ -35,14 +35,26 @@ const posturaSchema = new mongoose.Schema(
     },
 
     categoria: {
-      type: String,
-      enum: ['espalda', 'cuello', 'brazos', 'piernas', 'respiración', 'otro'],
-      default: 'otro',
-    },
-    
-    energiaGastada: { type: Number, default: 0 }, // para calcular puntos
+  type: [String],
+  enum: [
+    'espalda',
+    'lumbar',
+    'cuello',
+    'hombros',
+    'brazos',
+    'pecho',
+    'core',
+    'caderas',
+    'piernas',
+    'equilibrio',
+    'respiración'
+  ],
+  default: ['otro'],
+},
+
+    energiaGastada: { type: Number, required: true, default: 0 },
+    tiempoMinutos: { type: Number, required: true, default: 1 },
     dificultad: { type: Number, min: 1, max: 5, default: 1 },
-    tiempoMinutos: { type: Number, default: 0 },
     nivel: {
       type: String,
       enum: ['básico', 'intermedio', 'avanzado'],
@@ -60,5 +72,5 @@ const posturaSchema = new mongoose.Schema(
   }
 )
 
-export default mongoose.models.Postura || mongoose.model('Postura', posturaSchema)
+export default mongoose.model('Postura', posturaSchema)
 
