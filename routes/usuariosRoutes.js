@@ -11,12 +11,6 @@ import {
 } from '../controllers/usuarioController.js'
 
 import {
-  guardarHorario,
-  obtenerHorario,
-  cambiarEstadoHorario,
-} from '../controllers/usuarioHorarioController.js'
-
-import {
   obtenerMiInventario,
   crearInventario,
   agregarAccesorio,
@@ -65,11 +59,6 @@ router.put('/rol/:id', verificarToken, soloAdmin, cambiarRol)
 router.put('/estado/:id', verificarToken, soloAdmin, cambiarEstado)
 router.delete('/:id', verificarToken, soloAdmin, eliminarUsuario)
 
-//Horario
-router.post('/horario', verificarToken, guardarHorario)
-router.get('/horario', obtenerHorario)
-router.patch('/horario/estado', verificarToken, cambiarEstadoHorario)
-
 // Inventario del usuario
 router.get('/inventario', verificarToken, obtenerMiInventario)
 router.post('/inventario', verificarToken, crearInventario)
@@ -96,4 +85,5 @@ router.get('/reto', verificarToken, obtenerMisRetos)
 router.post('/reto/completar-postura', verificarToken, completarPostura)
 router.post('/reto/finalizar', verificarToken, finalizarReto)
 router.delete('/reto/:id', verificarToken, eliminarUsuarioReto)
+
 export default router

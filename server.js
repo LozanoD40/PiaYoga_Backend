@@ -9,7 +9,6 @@ dotenv.config()
 // Importar rutas
 import accesoriosRoutes from './routes/accesoriosRoutes.js'
 import consejosRoutes from './routes/consejosRoutes.js'
-import horariosRoutes from './routes/horariosRoutes.js'
 import posturaRoutes from './routes/posturasRoutes.js'
 import pushRoutes from './routes/pushRoutes.js'
 import rutinasRoutes from './routes/rutinasRoutes.js'
@@ -37,7 +36,6 @@ connectDB()
 // Rutas principales
 app.use('/api/accesorios', accesoriosRoutes)
 app.use('/api/consejos', consejosRoutes)
-app.use('/api/horarios', horariosRoutes)
 app.use('/api/posturas', posturaRoutes)
 app.use('/api/push', pushRoutes)
 app.use('/api/rutinas', rutinasRoutes)
