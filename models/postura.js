@@ -35,22 +35,22 @@ const posturaSchema = new mongoose.Schema(
     },
 
     categoria: {
-  type: [String],
-  enum: [
-    'espalda',
-    'lumbar',
-    'cuello',
-    'hombros',
-    'brazos',
-    'pecho',
-    'core',
-    'caderas',
-    'piernas',
-    'equilibrio',
-    'respiración'
-  ],
-  default: ['otro'],
-},
+      type: [String],
+      enum: [
+        'espalda',
+        'lumbar',
+        'cuello',
+        'hombros',
+        'brazos',
+        'pecho',
+        'core',
+        'caderas',
+        'piernas',
+        'equilibrio',
+        'respiración',
+      ],
+      default: ['respiración'],
+    },
 
     energiaGastada: { type: Number, required: true, default: 0 },
     tiempoMinutos: { type: Number, required: true, default: 1 },

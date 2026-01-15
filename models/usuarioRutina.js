@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 const usuarioRutinaSchema = new mongoose.Schema(
   {
     usuario: {
@@ -12,21 +14,47 @@ const usuarioRutinaSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Historial de sesiones
     progreso: [
       {
-        fecha: Date,
-        completado: Boolean,
-        duracionMinutos: Number,
+        fecha: {
+          type: Date,
+          default: Date.now,
+        },
+        completada: {
+          type: Boolean,
+          default: false,
+        },
+        duracionRealMinutos: {
+          type: Number,
+          default: 0,
+        },
+        puntosGanados: {
+          type: Number,
+          default: 0,
+        },
       },
     ],
 
-    puntosGanados: { type: Number, default: 0 },
-    dineroGanado: { type: Number, default: 0 },
+    // Totales
+    puntosTotales: {
+      type: Number,
+      default: 0,
+    },
 
-    completado: { type: Boolean, default: false },
+    rutinaCompletada: {
+      type: Boolean,
+      default: false,
+    },
 
-    fechaInicio: { type: Date, default: Date.now },
-    fechaFinalizacion: Date,
+    fechaInicio: {
+      type: Date,
+      default: Date.now,
+    },
+
+    fechaFinalizacion: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

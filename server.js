@@ -7,10 +7,9 @@ import { connectDB } from './config/db.js'
 dotenv.config()
 
 // Importar rutas
-import accesoriosRoutes from './routes/accesoriosRoutes.js'
+import logrosRoutes from './routes/logrosRoutes.js'
 import consejosRoutes from './routes/consejosRoutes.js'
 import posturaRoutes from './routes/posturasRoutes.js'
-import pushRoutes from './routes/pushRoutes.js'
 import rutinasRoutes from './routes/rutinasRoutes.js'
 import usuariosRoutes from './routes/usuariosRoutes.js'
 
@@ -34,10 +33,9 @@ app.use(express.urlencoded({ extended: true }))
 connectDB()
 
 // Rutas principales
-app.use('/api/accesorios', accesoriosRoutes)
+app.use('/api/accesorios', logrosRoutes)
 app.use('/api/consejos', consejosRoutes)
 app.use('/api/posturas', posturaRoutes)
-app.use('/api/push', pushRoutes)
 app.use('/api/rutinas', rutinasRoutes)
 app.use('/api/usuarios', usuariosRoutes)
 

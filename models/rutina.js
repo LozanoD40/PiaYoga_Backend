@@ -14,22 +14,58 @@ const rutinaSchema = new mongoose.Schema(
       required: true,
     },
 
+    creador: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Usuario',
+      default: null,
+    },
+    
     descripcion: {
       type: String,
       default: '',
     },
 
+    imagen: {
+      type: String, // URL o path
+      required: true,
+    },
+
+    dificultad: {
+      type: String,
+      enum: ['principiante', 'intermedio', 'avanzado'],
+      required: true,
+    },
+
+    tiempoTotal: {
+      type: Number, // minutos
+      required: true,
+    },
+
+    // Posturas con orden y duración
     posturas: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Postura',
-        required: true,
+        postura: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Postura',
+          required: true,
+        },
+        duracion: {
+          type: Number, // segundos
+          required: true,
+        },
+        orden: {
+          type: Number,
+          required: true,
+        },
       },
     ],
 
-    energiaTotal: { type: Number, default: 0 },
-    tiempoTotal: { type: Number, default: 0 },
-    dificultadPromedio: { type: Number, default: 1 },
+    // Música relacionada
+    musica: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Musica',
+      required: false,
+    },
 
     estado: {
       type: String,

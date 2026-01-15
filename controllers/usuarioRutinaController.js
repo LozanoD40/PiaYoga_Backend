@@ -1,10 +1,9 @@
+import UsuarioRutina from '../models/usuarioRutina.js'
 import Rutina from '../models/rutina.js'
-import Postura from '../models/postura.js'
-import Usuario from '../models/usuario.js'
-import Accesorio from '../models/accesorio.js'
 
 // ---------------------------------------------
-// 1) ASIGNAR RUTINA A UN USUARIO
+// 1) ASIGNAR RUTINA A USUARIO
+// (predefinida o propia)
 // ---------------------------------------------
 export const asignarRutina = async (req, res) => {
   try {
@@ -12,131 +11,167 @@ export const asignarRutina = async (req, res) => {
     const { rutinaId } = req.body
 
     const rutina = await Rutina.findById(rutinaId)
-    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+    if (!rutina) {
+      return res.status(404).json({ error: 'Rutina no encontrada' })
+    }
 
-    // Asignar usuario si era predefinida o reto
-    rutina.usuario = usuarioId
-    await rutina.save()
+    // ❌ No permitir usar rutinas personalizadas de otros usuarios
+    if (
+      rutina.tipo === 'personalizado' &&
+      rutina.creador.toString() !== usuarioId
+    ) {
+      return res.status(403).json({
+        error: 'No puedes asignar rutinas personalizadas de otros usuarios',
+      })
+    }
 
-    return res.json({ mensaje: 'Rutina asignada correctamente', rutina })
+    // ❌ Evitar duplicados
+    const yaAsignada = await UsuarioRutina.findOne({
+      usuario: usuarioId,
+      rutina: rutinaId,
+    })
+
+    if (yaAsignada) {
+      return res.status(400).json({
+        error: 'Esta rutina ya está asignada al usuario',
+      })
+    }
+
+    const usuarioRutina = await UsuarioRutina.create({
+      usuario: usuarioId,
+      rutina: rutinaId,
+      fechaInicio: new Date(),
+    })
+
+    res.status(201).json({
+      msg: 'Rutina asignada correctamente',
+      usuarioRutina,
+    })
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({ error: 'Error asignando rutina' })
+    console.error(error)
+    res.status(500).json({ error: 'Error asignando rutina' })
   }
 }
 
 // ---------------------------------------------
-// 2) OBTENER TODAS LAS RUTINAS DEL USUARIO
+// 2) OBTENER RUTINAS DEL USUARIO
 // ---------------------------------------------
 export const obtenerMisRutinas = async (req, res) => {
   try {
     const usuarioId = req.user.id
 
-    const rutinas = await Rutina.find({ usuario: usuarioId }).populate(
-      'posturas'
-    )
+    const rutinas = await UsuarioRutina.find({ usuario: usuarioId }).populate({
+      path: 'rutina',
+      populate: [{ path: 'posturas.postura' }, { path: 'musica' }],
+    })
 
-    return res.json(rutinas)
+    res.json(rutinas)
   } catch (error) {
-    return res.status(500).json({ error: 'Error obteniendo rutinas' })
+    console.error(error)
+    res.status(500).json({ error: 'Error obteniendo rutinas del usuario' })
   }
 }
 
 // ---------------------------------------------
-// 3) MARCAR PROGRESO DE UNA RUTINA
+// 3) REGISTRAR PROGRESO
 // ---------------------------------------------
-export const marcarProgreso = async (req, res) => {
+export const registrarProgreso = async (req, res) => {
   try {
     const usuarioId = req.user.id
-    const { rutinaId, semana, duracionMinutos, intensidad } = req.body
+    const { rutinaId, duracionMinutos } = req.body
 
-    const rutina = await Rutina.findOne({ _id: rutinaId, usuario: usuarioId })
-    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+    const usuarioRutina = await UsuarioRutina.findOne({
+      usuario: usuarioId,
+      rutina: rutinaId,
+    })
 
-    const registro = {
-      semana,
-      duracionMinutos,
-      intensidad,
-      completado: false,
+    if (!usuarioRutina) {
+      return res.status(404).json({ error: 'Rutina no asignada al usuario' })
     }
 
-    rutina.progresion.push(registro)
-    await rutina.save()
+    usuarioRutina.progreso.push({
+      fecha: new Date(),
+      completado: true,
+      duracionMinutos,
+    })
 
-    return res.json({ mensaje: 'Progreso registrado', rutina })
+    await usuarioRutina.save()
+
+    res.json({
+      msg: 'Progreso registrado correctamente',
+      usuarioRutina,
+    })
   } catch (error) {
-    console.log(error)
-    return res.status(500).json({ error: 'Error guardando progreso' })
+    console.error(error)
+    res.status(500).json({ error: 'Error registrando progreso' })
   }
 }
 
 // ---------------------------------------------
-// 4) COMPLETAR RUTINA (otorga recompensas)
+// 4) COMPLETAR RUTINA
 // ---------------------------------------------
 export const completarRutina = async (req, res) => {
   try {
     const usuarioId = req.user.id
     const { rutinaId } = req.body
 
-    const rutina = await Rutina.findOne({
-      _id: rutinaId,
+    const usuarioRutina = await UsuarioRutina.findOne({
       usuario: usuarioId,
-    }).populate('posturas')
-    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
+      rutina: rutinaId,
+    }).populate('rutina')
 
-    if (rutina.completado) {
+    if (!usuarioRutina) {
+      return res.status(404).json({ error: 'Rutina no asignada al usuario' })
+    }
+
+    if (usuarioRutina.completado) {
       return res.status(400).json({ error: 'Rutina ya completada' })
     }
 
-    // 1) Calcular recompensas
-    let puntos = 0
-    let dinero = 0
+    // 🎯 Reglas simples de recompensa (puedes ajustar)
+    let puntos = usuarioRutina.rutina.tiempoTotal * 2
 
-    rutina.posturas.forEach((p) => {
-      puntos += p.puntos || 0
-      dinero += p.dinero || 0
-    })
-
-    // BONUS SI ES RETO
-    if (rutina.tipo === 'reto') {
-      puntos *= 2
-      dinero *= 2
+    if (usuarioRutina.rutina.dificultad === 'avanzado') {
+      puntos += 50
     }
 
-    rutina.totalPuntosGanados = puntos
-    rutina.totalDineroGanado = dinero
+    usuarioRutina.puntosGanados += puntos
+    usuarioRutina.completado = true
+    usuarioRutina.fechaFinalizacion = new Date()
 
-    rutina.completado = true
-    rutina.fechaCompletado = new Date()
-    await rutina.save()
+    await usuarioRutina.save()
 
-    return res.json({
-      mensaje: 'Rutina completada',
+    res.json({
+      msg: 'Rutina completada',
       puntosGanados: puntos,
-      dineroGanado: dinero,
-      rutina,
+      usuarioRutina,
     })
   } catch (error) {
-    return res.status(500).json({ error: 'Error completando rutina' })
+    console.error(error)
+    res.status(500).json({ error: 'Error completando rutina' })
   }
 }
 
 // ---------------------------------------------
-// 5) ELIMINAR UNA RUTINA DEL USUARIO
+// 5) DESASIGNAR RUTINA (BORRAR PROGRESO)
 // ---------------------------------------------
-export const eliminarRutina = async (req, res) => {
+export const eliminarRutinaUsuario = async (req, res) => {
   try {
     const usuarioId = req.user.id
     const { rutinaId } = req.params
 
-    const rutina = await Rutina.findOneAndDelete({
-      _id: rutinaId,
+    const eliminada = await UsuarioRutina.findOneAndDelete({
       usuario: usuarioId,
+      rutina: rutinaId,
     })
-    if (!rutina) return res.status(404).json({ error: 'Rutina no encontrada' })
 
-    return res.json({ mensaje: 'Rutina eliminada correctamente' })
+    if (!eliminada) {
+      return res.status(404).json({ error: 'Rutina no encontrada' })
+    }
+
+    res.json({ msg: 'Rutina eliminada del usuario' })
   } catch (error) {
-    return res.status(500).json({ error: 'Error eliminando rutina' })
+    console.error(error)
+    res.status(500).json({ error: 'Error eliminando rutina del usuario' })
   }
 }
