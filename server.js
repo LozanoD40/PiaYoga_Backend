@@ -22,6 +22,7 @@ app.use(
       'http://localhost:5173',
       'https://lozanod40.github.io',
       'https://lozanod40.github.io/PiaYoga_Frontend',
+      'https://piayoga-backend.onrender.com/api/usuarios/perfil',
     ],
     credentials: true,
   })
