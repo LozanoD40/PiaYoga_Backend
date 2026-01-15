@@ -26,6 +26,7 @@ import {
 } from '../controllers/usuarioRutinaController.js'
 
 import { verificarToken, soloAdmin } from '../middleware/auth.js'
+import { uploadAvatar } from '../middleware/uploadAvatar.js'
 
 const router = express.Router()
 
@@ -35,13 +36,12 @@ router.post('/login', login)
 
 // Privado
 router.get('/perfil', verificarToken, perfil)
-router.put('/perfil', verificarToken, actualizarPerfil)
-
-// Admin
-router.get('/', verificarToken, soloAdmin, listarUsuarios)
-router.put('/rol/:id', verificarToken, soloAdmin, cambiarRol)
-router.put('/estado/:id', verificarToken, soloAdmin, cambiarEstado)
-router.delete('/:id', verificarToken, soloAdmin, eliminarUsuario)
+router.put(
+  '/perfil',
+  verificarToken,
+  uploadAvatar.single('avatar'),
+  actualizarPerfil
+)
 
 // Inventario del usuario
 router.get('/inventario', verificarToken, obtenerMiInventario)
@@ -55,5 +55,11 @@ router.get('/rutina', verificarToken, obtenerMisRutinas)
 router.post('/progreso', verificarToken, registrarProgreso)
 router.post('/completar', verificarToken, completarRutina)
 router.delete('/:rutinaId', verificarToken, eliminarRutinaUsuario)
+
+// Admin
+router.get('/', verificarToken, soloAdmin, listarUsuarios)
+router.put('/rol/:id', verificarToken, soloAdmin, cambiarRol)
+router.put('/estado/:id', verificarToken, soloAdmin, cambiarEstado)
+router.delete('/:id', verificarToken, soloAdmin, eliminarUsuario)
 
 export default router

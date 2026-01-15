@@ -2,33 +2,33 @@ import UsuarioInventario from '../models/usuarioInventario.js'
 import Logro from '../models/logro.js'
 import { AppError } from '../utils/errorHandler.js'
 
-/* ======================================
-   Obtener inventario / perfil del usuario
-====================================== */
+/*  Obtener inventario  */
+/* En tu controlador usuarioInventarioController.js */
 export const obtenerMiInventario = async (req, res, next) => {
   try {
-    const usuarioId = req.user.id
+    const usuarioId = req.user.id || req.user._id; // Aseguramos capturar el ID
 
     const inventario = await UsuarioInventario.findOne({
       usuario: usuarioId,
-    }).populate('logros.logro')
+    }); // QUITAMOS EL .populate('logros.logro') PARA PROBAR
 
     if (!inventario) {
-      return next(new AppError('El usuario no tiene inventario aún', 404))
+      // Si el usuario no tiene inventario, devolvemos null en vez de error 404
+      // Esto evita que el front lance errores innecesarios
+      return res.status(200).json({ status: 'success', data: null });
     }
 
     res.status(200).json({
       status: 'success',
       data: inventario,
-    })
+    });
   } catch (error) {
-    next(error)
+    console.log("ERROR EN BACKEND:", error); // Esto saldrá en tu terminal de VS Code
+    next(error);
   }
 }
 
-/* ======================================
-   Crear inventario inicial (una sola vez)
-====================================== */
+/* Crear inventario inicial */
 export const crearInventario = async (req, res, next) => {
   try {
     const usuarioId = req.user.id
@@ -54,9 +54,7 @@ export const crearInventario = async (req, res, next) => {
   }
 }
 
-/* ======================================
-   Actualizar datos personales del perfil
-====================================== */
+/* Actualizar datos */
 export const Perfil = async (req, res, next) => {
   try {
     const usuarioId = req.user.id
@@ -88,9 +86,7 @@ export const Perfil = async (req, res, next) => {
   }
 }
 
-/* ======================================
-   Desbloquear logro manualmente (admin o sistema)
-====================================== */
+/*  Desbloquear logro manualmente  */
 export const agregarLogro = async (req, res, next) => {
   try {
     const usuarioId = req.user.id

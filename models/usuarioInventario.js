@@ -49,7 +49,7 @@ const usuarioInventarioSchema = new mongoose.Schema(
         },
 
         motivo: {
-          type: String, 
+          type: String,
         },
       },
     ],

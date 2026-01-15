@@ -95,11 +95,15 @@ export const actualizarPerfil = async (req, res, next) => {
     }
 
     usuario.nombre = req.body.nombre ?? usuario.nombre
-    usuario.avatar = req.body.avatar ?? usuario.avatar
+    usuario.email = req.body.email ?? usuario.email
+
+    if (req.file) {
+      usuario.avatar = `imagenesDePerfil/${req.file.filename}`
+    }
 
     await usuario.save()
 
-    res.json({ msg: 'Perfil actualizado', usuario })
+    res.json(usuario)
   } catch (error) {
     next(error)
   }
