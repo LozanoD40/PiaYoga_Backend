@@ -11,10 +11,10 @@ import {
 } from '../controllers/usuarioController.js'
 
 import {
-  obtenerMiInventario,
-  crearInventario,
-  Perfil,
-  agregarLogro,
+  obtenerDatos,
+  actualizaDatos,
+  obtenerMisLogros,
+  desbloquearLogro,
 } from '../controllers/usuarioInventarioController.js'
 
 import {
@@ -43,11 +43,12 @@ router.put(
   actualizarPerfil
 )
 
-// Inventario del usuario
-router.get('/inventario', verificarToken, obtenerMiInventario)
-router.post('/inventario', verificarToken, crearInventario)
-router.post('/inventario/agregar', verificarToken, Perfil)
-router.post('/inventario/remover', verificarToken, agregarLogro)
+router.get('/datos', verificarToken, obtenerDatos)
+router.put('/datos', verificarToken, actualizaDatos)
+
+// Logros
+router.get('/logros', verificarToken, obtenerMisLogros)
+router.post('/logros', verificarToken, desbloquearLogro)
 
 // Rutinas del usuario
 router.post('/rutina', verificarToken, asignarRutina)

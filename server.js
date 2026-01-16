@@ -21,8 +21,7 @@ app.use(
     origin: [
       'http://localhost:5173',
       'https://lozanod40.github.io',
-      'https://lozanod40.github.io/PiaYoga_Frontend',
-      'https://piayoga-backend.onrender.com/api/usuarios/perfil',
+      'https://lozanod40.github.io/PiaYoga_Frontend'
     ],
     credentials: true,
   })
@@ -35,7 +34,7 @@ app.use(express.urlencoded({ extended: true }))
 connectDB()
 
 // Rutas principales
-app.use('/api/accesorios', logrosRoutes)
+app.use('/api/logros', logrosRoutes)
 app.use('/api/consejos', consejosRoutes)
 app.use('/api/posturas', posturaRoutes)
 app.use('/api/rutinas', rutinasRoutes)

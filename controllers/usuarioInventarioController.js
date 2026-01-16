@@ -2,68 +2,45 @@ import UsuarioInventario from '../models/usuarioInventario.js'
 import Logro from '../models/logro.js'
 import { AppError } from '../utils/errorHandler.js'
 
-/*  Obtener inventario  */
-/* En tu controlador usuarioInventarioController.js */
-export const obtenerMiInventario = async (req, res, next) => {
+/*Perfil */
+export const obtenerDatos = async (req, res, next) => {
   try {
-    const usuarioId = req.user.id || req.user._id; // Aseguramos capturar el ID
+    const usuarioId = req.user.id || req.user._id
 
     const inventario = await UsuarioInventario.findOne({
       usuario: usuarioId,
-    }); // QUITAMOS EL .populate('logros.logro') PARA PROBAR
+    }).select('perfil')
 
     if (!inventario) {
-      // Si el usuario no tiene inventario, devolvemos null en vez de error 404
-      // Esto evita que el front lance errores innecesarios
-      return res.status(200).json({ status: 'success', data: null });
+      return res.status(200).json({
+        status: 'success',
+        data: null,
+      })
     }
 
     res.status(200).json({
       status: 'success',
-      data: inventario,
-    });
-  } catch (error) {
-    console.log("ERROR EN BACKEND:", error); // Esto saldrá en tu terminal de VS Code
-    next(error);
-  }
-}
-
-/* Crear inventario inicial */
-export const crearInventario = async (req, res, next) => {
-  try {
-    const usuarioId = req.user.id
-
-    const existe = await UsuarioInventario.findOne({ usuario: usuarioId })
-    if (existe) {
-      return next(new AppError('El usuario ya tiene un inventario', 400))
-    }
-
-    const nuevoInventario = await UsuarioInventario.create({
-      usuario: usuarioId,
-      perfil: {},
-      logros: [],
-    })
-
-    res.status(201).json({
-      status: 'success',
-      msg: 'Inventario creado correctamente',
-      data: nuevoInventario,
+      data: inventario.perfil,
     })
   } catch (error) {
     next(error)
   }
 }
 
-/* Actualizar datos */
-export const Perfil = async (req, res, next) => {
+export const actualizaDatos = async (req, res, next) => {
   try {
     const usuarioId = req.user.id
     const { pesoKg, alturaCm, edad, estiloVida } = req.body
 
-    const inventario = await UsuarioInventario.findOne({ usuario: usuarioId })
+    let inventario = await UsuarioInventario.findOne({ usuario: usuarioId })
 
+    // 🔥 SI NO EXISTE, LO CREAMOS
     if (!inventario) {
-      return next(new AppError('Inventario no encontrado', 404))
+      inventario = await UsuarioInventario.create({
+        usuario: usuarioId,
+        perfil: {},
+        logros: [],
+      })
     }
 
     inventario.perfil = {
@@ -78,7 +55,6 @@ export const Perfil = async (req, res, next) => {
 
     res.status(200).json({
       status: 'success',
-      msg: 'Perfil actualizado correctamente',
       data: inventario.perfil,
     })
   } catch (error) {
@@ -86,10 +62,31 @@ export const Perfil = async (req, res, next) => {
   }
 }
 
-/*  Desbloquear logro manualmente  */
-export const agregarLogro = async (req, res, next) => {
+/*Logros*/
+export const obtenerMisLogros = async (req, res, next) => {
   try {
-    const usuarioId = req.user.id
+    const usuarioId = req.user.id || req.user._id
+
+    const inventario = await UsuarioInventario.findOne({
+      usuario: usuarioId,
+    }).populate('logros.logro')
+
+    if (!inventario) {
+      return next(new AppError('Inventario no encontrado', 404))
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: inventario.logros,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const desbloquearLogro = async (req, res, next) => {
+  try {
+    const usuarioId = req.user.id || req.user._id
     const { logroId, motivo } = req.body
 
     if (!logroId) {
@@ -101,28 +98,26 @@ export const agregarLogro = async (req, res, next) => {
       return next(new AppError('El logro no existe', 404))
     }
 
-    const inventario = await UsuarioInventario.findOne({ usuario: usuarioId })
+    const inventario = await UsuarioInventario.findOne({
+      usuario: usuarioId,
+    })
 
     if (!inventario) {
       return next(new AppError('Inventario no encontrado', 404))
     }
 
-    const yaDesbloqueado = inventario.logros.some(
+    const yaExiste = inventario.logros.some(
       (l) => l.logro.toString() === logroId
     )
 
-    if (yaDesbloqueado) {
+    if (yaExiste) {
       return next(new AppError('Este logro ya fue desbloqueado', 400))
     }
 
-    inventario.logros.push({
-      logro: logroId,
-      motivo,
-    })
-
+    inventario.logros.push({ logro: logroId, motivo })
     await inventario.save()
 
-    res.status(200).json({
+    res.status(201).json({
       status: 'success',
       msg: 'Logro desbloqueado correctamente',
       data: inventario.logros,

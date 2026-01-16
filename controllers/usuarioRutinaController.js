@@ -1,10 +1,7 @@
 import UsuarioRutina from '../models/usuarioRutina.js'
 import Rutina from '../models/rutina.js'
 
-// ---------------------------------------------
-// 1) ASIGNAR RUTINA A USUARIO
-// (predefinida o propia)
-// ---------------------------------------------
+//ASIGNAR RUTINA A USUARIO
 export const asignarRutina = async (req, res) => {
   try {
     const usuarioId = req.user.id
@@ -53,9 +50,7 @@ export const asignarRutina = async (req, res) => {
   }
 }
 
-// ---------------------------------------------
-// 2) OBTENER RUTINAS DEL USUARIO
-// ---------------------------------------------
+//  OBTENER RUTINAS 
 export const obtenerMisRutinas = async (req, res) => {
   try {
     const usuarioId = req.user.id
@@ -72,9 +67,7 @@ export const obtenerMisRutinas = async (req, res) => {
   }
 }
 
-// ---------------------------------------------
-// 3) REGISTRAR PROGRESO
-// ---------------------------------------------
+//  REGISTRAR PROGRESO
 export const registrarProgreso = async (req, res) => {
   try {
     const usuarioId = req.user.id
@@ -107,9 +100,7 @@ export const registrarProgreso = async (req, res) => {
   }
 }
 
-// ---------------------------------------------
-// 4) COMPLETAR RUTINA
-// ---------------------------------------------
+// COMPLETAR RUTINA
 export const completarRutina = async (req, res) => {
   try {
     const usuarioId = req.user.id
@@ -152,9 +143,7 @@ export const completarRutina = async (req, res) => {
   }
 }
 
-// ---------------------------------------------
-// 5) DESASIGNAR RUTINA (BORRAR PROGRESO)
-// ---------------------------------------------
+//DESASIGNAR RUTINA 
 export const eliminarRutinaUsuario = async (req, res) => {
   try {
     const usuarioId = req.user.id
